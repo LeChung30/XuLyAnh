@@ -89,6 +89,58 @@ def sharpen_filter_color(img):
     sharpened_image = convolve_color(img, sharpen_filter)
     return sharpened_image
 
+# Lọc trung điểm cho ảnh màu
+def midpoint_filter_color(image, kernel_size=3):
+    pad = kernel_size // 2
+
+    # Thêm padding vào ảnh để xử lý biên
+    padded_image = np.pad(image, ((pad, pad), (pad, pad), (0, 0)), mode='edge')
+
+    # Khởi tạo ảnh kết quả
+    filtered_image = np.zeros_like(image)
+
+    # Duyệt qua từng pixel trong ảnh
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
+            for c in range(image.shape[2]):
+                # Trích xuất vùng lân cận pixel hiện tại với kích thước kernel
+                region = padded_image[i:i + kernel_size, j:j + kernel_size, c]
+                # Chuyển các giá trị thành int để tránh tràn số
+                min_val = np.min(region).astype(int)
+                max_val = np.max(region).astype(int)
+                # Tính giá trị trung điểm
+                filtered_image[i, j, c] = (min_val + max_val) // 2
+
+    return filtered_image
+
+# Bộ lọc trung bình cắt bỏ alpha cho ảnh màu
+# Alpha kiểm soát mức độ lọc nhiễu 2,4,... giá trị max min tương ứng
+def alpha_trimmed_mean_filter_color(image, kernel_size=3, alpha=2):
+    pad = kernel_size // 2
+
+    # Thêm padding vào ảnh để xử lý biên
+    padded_image = np.pad(image, ((pad, pad), (pad, pad), (0, 0)), mode='edge')
+
+    # Khởi tạo ảnh kết quả
+    filtered_image = np.zeros_like(image)
+
+    # Duyệt qua từng pixel trong ảnh
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
+            for c in range(image.shape[2]):
+                # Trích xuất vùng lân cận pixel hiện tại với kích thước kernel
+                region = padded_image[i:i + kernel_size, j:j + kernel_size, c]
+                # Chuyển đổi vùng thành mảng 1 chiều và sắp xếp
+                sorted_region = np.sort(region.flatten())
+
+                # Loại bỏ `alpha` giá trị lớn nhất và nhỏ nhất
+                trimmed_region = sorted_region[alpha//2 : len(sorted_region) - alpha//2]
+
+                # Tính trung bình của các giá trị còn lại
+                filtered_image[i, j, c] = np.mean(trimmed_region)
+
+    return filtered_image
+
 if __name__ == '__main__':
     # Đọc ảnh màu
     img = cv2.imread('AnhNhieu.png')
@@ -100,6 +152,8 @@ if __name__ == '__main__':
     min_f = min_filter_color(img, 3)
     max_f = max_filter_color(img, 3)
     median_f = median_filter_color(img, 3)
+    # midpoint_f = midpoint_filter_color(img, 3)
+    alpha_f = alpha_trimmed_mean_filter_color(img, 3, 4)
 
     # Hiển thị ảnh gốc và các ảnh đã lọc
     cv2.imshow('Original Image', img)
@@ -109,5 +163,7 @@ if __name__ == '__main__':
     cv2.imshow('Min Filter', np.clip(min_f, 0, 255).astype(np.uint8))
     cv2.imshow('Max Filter', np.clip(max_f, 0, 255).astype(np.uint8))
     cv2.imshow('Median Filter', np.clip(median_f, 0, 255).astype(np.uint8))
+    # cv2.imshow('Midpoint Filter', np.clip(midpoint_f, 0, 255).astype(np.uint8))
+    cv2.imshow('Alpha-Trimmed Mean Filter', np.clip(alpha_f, 0, 255).astype(np.uint8))
     cv2.waitKey(0)
     cv2.destroyAllWindows()
