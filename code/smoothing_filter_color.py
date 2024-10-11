@@ -32,11 +32,22 @@ def mean_filter_color(img):
     return smoothed_image
 
 # Lọc Gaussian cho ảnh màu
-def gaussian_filter_color(img):
-    gaussian_filter = np.array([[1, 2, 1],
-                                [2, 4, 2],
-                                [1, 2, 1]]) / 16
-    gaussian_smoothed_image = convolve_color(img, gaussian_filter)
+def gaussian_filter_color(img, kernel_size = 3, sigma = 1):
+    kernel = np.zeros((kernel_size, kernel_size), dtype=np.float32)
+    center = kernel_size // 2
+    sum_val = 0.0
+
+    for i in range(kernel_size):
+        for j in range(kernel_size):
+            x = i - center
+            y = j - center
+            kernel[i, j] = np.exp(-(x ** 2 + y ** 2) / (2 * sigma ** 2))
+            sum_val += kernel[i, j]
+
+    # Chuẩn hóa kernel để tổng các phần tử bằng 1
+    kernel /= sum_val
+
+    gaussian_smoothed_image = convolve_color(img, kernel)
     return gaussian_smoothed_image
 
 # Lọc Min cho ảnh màu

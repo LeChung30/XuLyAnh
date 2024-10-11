@@ -28,17 +28,29 @@ def convolve(image, kernel):
     return output
 
 # Lọc Trung bình (Mean Filter)
-def mean_filter(img):
-    mean_filter = np.ones((3, 3)) / 9
+def mean_filter(img, size=3):
+    mean_filter = np.ones((size, size)) / size**2
     smoothed_image = convolve(img, mean_filter)
     return smoothed_image
 
 # Lọc Gaussian
-def gaussian_filter(img):
-    gaussian_filter = np.array([[1, 2, 1],
-                                [2, 4, 2],
-                                [1, 2, 1]]) / 16
-    gaussian_smoothed_image = convolve(img, gaussian_filter)
+def gaussian_filter(img, kernel_size=3, sigma=1):
+    kernel = np.zeros((kernel_size, kernel_size), dtype=np.float32)
+    center = kernel_size // 2
+    sum_val = 0.0
+
+    for i in range(kernel_size):
+        for j in range(kernel_size):
+            x = i - center
+            y = j - center
+            kernel[i, j] = np.exp(-(x ** 2 + y ** 2) / (2 * sigma ** 2))
+            sum_val += kernel[i, j]
+
+    # Chuẩn hóa kernel để tổng các phần tử bằng 1
+    kernel /= sum_val
+    print(kernel)
+
+    gaussian_smoothed_image = convolve(img, kernel)
     return gaussian_smoothed_image
 
 # Lọc Min
@@ -88,6 +100,14 @@ def sharpen_filter(img):
     sharpened_image = convolve(img, sharpen_filter)
     return sharpened_image
 
+# Lọc làm sắc nét (LapLacian Filter)
+def laplacian_filter(img):
+    laplacian_filter = np.array([[0, 1, 0],
+                               [1, 4, 1],
+                               [0, 1, 0]])
+    laplacian_image = convolve(img, laplacian_filter)
+    return laplacian_image
+
 # Bộ lọc trung điểm cho ảnh xám
 def midpoint_filter(image, kernel_size=3):
     pad = kernel_size // 2
@@ -107,7 +127,7 @@ def midpoint_filter(image, kernel_size=3):
             min_val = np.min(region)
             max_val = np.max(region)
             # Tính giá trị trung điểm
-            filtered_image[i, j] = (min_val + max_val) // 2
+            filtered_image[i, j] = (min_val + max_val) / 2
 
     return filtered_image
 
@@ -142,24 +162,26 @@ if __name__ == '__main__':
     img = cv2.imread('HoaHong.png', cv2.IMREAD_GRAYSCALE)
 
     # Áp dụng các bộ lọc
-    mean = mean_filter(img)
-    gaussian = gaussian_filter(img)
-    sharpen = sharpen_filter(img)
-    min_f = min_filter(img, 3)
-    max_f = max_filter(img, 3)
-    median_f = median_filter(img, 3)
-    midpoint_f = midpoint_filter(img, 3)
-    alpha_f = alpha_trimmed_mean_filter(img, 3, 2)
+    mean = mean_filter(img, 15)
+    gaussian = gaussian_filter(img, 15, 10)
+    # sharpen = sharpen_filter(img)
+    # laplacian = laplacian_filter(img)
+    min_f = min_filter(img, 15)
+    max_f = max_filter(img, 15)
+    median_f = median_filter(img, 15)
+    # midpoint_f = midpoint_filter(img, 3)
+    # alpha_f = alpha_trimmed_mean_filter(img, 3, 2)
 
     # Hiển thị ảnh gốc và các ảnh đã lọc
     cv2.imshow('Original Image', img)
     cv2.imshow('Mean Filter', mean.astype(np.uint8))
     cv2.imshow('Gaussian Filter', gaussian.astype(np.uint8))
-    cv2.imshow('Sharpen Filter', sharpen.astype(np.uint8))
+    # cv2.imshow('Sharpen Filter', sharpen.astype(np.uint8))
+    # cv2.imshow('Laplacian Filter', laplacian.astype(np.uint8))
     cv2.imshow('Min Filter', min_f.astype(np.uint8))
     cv2.imshow('Max Filter', max_f.astype(np.uint8))
     cv2.imshow('Median Filter', median_f.astype(np.uint8))
-    cv2.imshow('Midpoint Filter', midpoint_f.astype(np.uint8))
-    cv2.imshow('Alpha Filter', alpha_f.astype(np.uint8))
+    # cv2.imshow('Midpoint Filter', midpoint_f.astype(np.uint8))
+    # cv2.imshow('Alpha Filter', alpha_f.astype(np.uint8))
     cv2.waitKey(0)
     cv2.destroyAllWindows()
